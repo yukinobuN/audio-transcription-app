@@ -3,8 +3,5 @@
     "src/app/api/transcribe/route.ts": {
       "maxDuration": 300
     }
-  },
-  "env": {
-    "GEMINI_API_KEY": "@gemini-api-key"
   }
 }
