@@ -2,6 +2,8 @@
 
 Google Gemini APIを使用して音声ファイルをテキストに変換するNext.jsアプリケーションです。
 
+**🚀 Vercel自動デプロイ対応**
+
 ## 機能
 
 - 音声ファイル（MP3、M4A、WAV、FLAC、OGG、WebM）のアップロード
