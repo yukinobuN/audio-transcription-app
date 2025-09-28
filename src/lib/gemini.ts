@@ -8,23 +8,16 @@ if (!apiKey) {
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// 利用可能なモデルを取得
-async function getAvailableModels() {
-  try {
-    const models = await genAI.listModels();
-    console.log('Available models:', models.map(m => m.name));
-    return models;
-  } catch (error) {
-    console.error('Error listing models:', error);
-    return [];
-  }
+// 利用可能なモデルを確認（ログ出力のみ）
+function logAvailableModels() {
+  console.log('Trying models in order: gemini-2.0-flash-exp, gemini-1.5-pro-002, gemini-1.5-pro-latest, gemini-1.5-pro');
 }
 
 export async function transcribeAudio(audioFile: Buffer, mimeType: string): Promise<string> {
   try {
     // 利用可能なモデルを確認
     console.log('Checking available models...');
-    await getAvailableModels();
+    logAvailableModels();
 
     // 最新モデルを順番に試行（Gemini 2.0 Flash → Gemini 1.5 Pro）
     const modelNames = [
