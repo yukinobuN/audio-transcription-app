@@ -269,7 +269,7 @@ function sendEvent(
 ) {
   try {
     // より厳密にコントローラーの状態をチェック
-    if (controller.desiredSize !== null && !controller.signal?.aborted) {
+    if (controller.desiredSize !== null) {
       const message = `event: ${type}\ndata: ${JSON.stringify(data)}\n\n`;
       controller.enqueue(encoder.encode(message));
     }
