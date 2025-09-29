@@ -275,7 +275,7 @@ function sendEvent(
     }
   } catch (error) {
     // コントローラーが閉じられた場合はエラーログを抑制
-    if (error.code !== 'ERR_INVALID_STATE') {
+    if (error instanceof Error && error.message !== 'ERR_INVALID_STATE') {
       console.warn('Failed to send event:', error);
     }
   }
