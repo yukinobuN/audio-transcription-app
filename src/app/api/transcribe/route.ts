@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
 
 // ファイルサイズ制限を設定（Next.js 13+）
 export const runtime = 'nodejs';
-export const maxDuration = 900; // 15分のタイムアウト（長時間音声対応）
+export const maxDuration = 300; // 5分のタイムアウト（Vercel無料プラン制限）
 
 // ファイルサイズ制限（Vercel）
 export const dynamic = 'force-dynamic';
