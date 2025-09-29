@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ChunkResult {
   chunkIndex: number;
@@ -37,13 +37,29 @@ export default function HomePage() {
   }>({ chunkResults: [] });
   const [liveTranscript, setLiveTranscript] = useState<string>('');
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [maxFileSizeMB, setMaxFileSizeMB] = useState<number>(4);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // 設定を取得
+    fetch('/api/config')
+      .then(res => res.json())
+      .then(config => {
+        setMaxFileSizeMB(config.maxFileSizeMB);
+      })
+      .catch(err => {
+        console.warn('Failed to fetch config, using default:', err);
+      });
+  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.size > 4 * 1024 * 1024) {
-        setError('ファイルサイズが4MBを超えています。Vercel無料プランの制限により、4MB以下のファイルをお選びください。');
+      if (selectedFile.size > maxFileSizeMB * 1024 * 1024) {
+        const errorMessage = maxFileSizeMB <= 4
+          ? `ファイルサイズが${maxFileSizeMB}MBを超えています。Vercel無料プランの制限により、${maxFileSizeMB}MB以下のファイルをお選びください。`
+          : `ファイルサイズが${maxFileSizeMB}MBを超えています。`;
+        setError(errorMessage);
         return;
       }
 

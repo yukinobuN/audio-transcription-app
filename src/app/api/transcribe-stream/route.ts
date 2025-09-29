@@ -14,11 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ファイルサイズチェック（4MB - Vercel制限）
-    const maxSize = 4 * 1024 * 1024;
+    // ファイルサイズチェック
+    const maxFileSizeMB = parseInt(process.env.MAX_FILE_SIZE_MB || '4');
+    const maxSize = maxFileSizeMB * 1024 * 1024;
     if (audioFile.size > maxSize) {
+      const errorMessage = maxFileSizeMB <= 4
+        ? `ファイルサイズが${maxFileSizeMB}MBを超えています。Vercel無料プランの制限により、${maxFileSizeMB}MB以下のファイルをお選びください。`
+        : `ファイルサイズが${maxFileSizeMB}MBを超えています。`;
       return new Response(
-        JSON.stringify({ error: 'ファイルサイズが4MBを超えています。Vercel無料プランの制限により、4MB以下のファイルをお選びください。' }),
+        JSON.stringify({ error: errorMessage }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
@@ -215,7 +219,21 @@ async function processAudioStream(
       sendEvent(controller, encoder, 'info', {
         message: 'Short audio detected, processing as single file'
       });
-      transcriptionText = await transcribeAudio(buffer, mimeType);
+      sendEvent(controller, encoder, 'debug', {
+        message: `File details: ${audioFile.name}, size: ${audioFile.size} bytes, mimeType: ${mimeType}`
+      });
+      try {
+        transcriptionText = await transcribeAudio(buffer, mimeType);
+        sendEvent(controller, encoder, 'info', {
+          message: 'Transcription completed successfully'
+        });
+      } catch (transcriptionError) {
+        console.error('Transcription failed:', transcriptionError);
+        sendEvent(controller, encoder, 'error', {
+          error: `Transcription failed: ${transcriptionError instanceof Error ? transcriptionError.message : 'Unknown error'}`
+        });
+        throw transcriptionError;
+      }
     }
 
     // 処理時間を計算
