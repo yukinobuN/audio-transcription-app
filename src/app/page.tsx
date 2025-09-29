@@ -42,8 +42,8 @@ export default function HomePage() {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.size > 100 * 1024 * 1024) {
-        setError('ファイルサイズが100MBを超えています。');
+      if (selectedFile.size > 4 * 1024 * 1024) {
+        setError('ファイルサイズが4MBを超えています。Vercel無料プランの制限により、4MB以下のファイルをお選びください。');
         return;
       }
 

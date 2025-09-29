@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ファイルサイズチェック（100MB）
-    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    // ファイルサイズチェック（4MB - Vercel制限）
+    const maxSize = 4 * 1024 * 1024; // 4MB in bytes
     if (audioFile.size > maxSize) {
       return NextResponse.json(
-        { error: 'ファイルサイズが100MBを超えています' },
+        { error: 'ファイルサイズが4MBを超えています。Vercel無料プランの制限により、4MB以下のファイルをお選びください。' },
         { status: 400 }
       );
     }
