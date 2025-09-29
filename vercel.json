@@ -2,6 +2,12 @@
   "functions": {
     "src/app/api/transcribe/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/transcribe-stream/route.ts": {
+      "maxDuration": 300
     }
+  },
+  "limits": {
+    "duration": 300000
   }
 }
