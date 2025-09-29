@@ -114,8 +114,15 @@ async function processAudioStream(
       status: 'success' | 'error';
     }> = [];
 
-    // 長時間音声の場合は分割処理
-    if (estimatedMinutes > 5) {
+    // M4Aファイルの場合は分割処理をスキップ
+    if (mimeType === 'audio/mp4') {
+      sendEvent(controller, encoder, 'info', {
+        message: 'M4A file detected - processing as single file (chunking not supported for M4A)'
+      });
+      transcriptionText = await transcribeAudio(buffer, mimeType);
+    }
+    // 長時間音声の場合は分割処理（M4A以外）
+    else if (estimatedMinutes > 5) {
       sendEvent(controller, encoder, 'info', {
         message: `Long audio detected (${estimatedMinutes} minutes), using chunked processing`
       });
@@ -154,6 +161,8 @@ async function processAudioStream(
 
         try {
           const chunkBuffer = Buffer.from(chunk.buffer);
+          // チャンクはWAV形式で出力されるため、常にaudio/wavで処理
+          console.log(`Processing chunk ${i + 1} as WAV format (${chunkBuffer.length} bytes)`);
           const chunkText = await transcribeAudio(chunkBuffer, 'audio/wav');
 
           if (chunkText && chunkText.trim().length > 0) {

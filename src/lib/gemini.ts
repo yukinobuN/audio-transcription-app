@@ -53,6 +53,28 @@ export async function transcribeAudio(audioFile: Buffer, mimeType: string): Prom
 }
 
 async function processWithModel(model: any, audioFile: Buffer, mimeType: string): Promise<string> {
+  // M4Aファイルの場合はMP3として処理（Gemini APIでaudio/mp4がサポートされていないため）
+  const mimeTypesToTry = mimeType === 'audio/mp4'
+    ? ['audio/mpeg', 'audio/mp3']
+    : [mimeType];
+
+  for (const tryMimeType of mimeTypesToTry) {
+    try {
+      console.log(`Trying MIME type: ${tryMimeType}`);
+      return await processWithModelAndMime(model, audioFile, tryMimeType);
+    } catch (error) {
+      console.warn(`Failed with MIME type ${tryMimeType}:`, error);
+      if (tryMimeType === mimeTypesToTry[mimeTypesToTry.length - 1]) {
+        throw error;
+      }
+      continue;
+    }
+  }
+
+  throw new Error('All MIME type attempts failed');
+}
+
+async function processWithModelAndMime(model: any, audioFile: Buffer, mimeType: string): Promise<string> {
   const prompt = `
 あなたは音声転写の専門家です。提供された音声ファイルを完全に、最初から最後まで正確に文字起こししてください。
 
@@ -78,6 +100,16 @@ async function processWithModel(model: any, audioFile: Buffer, mimeType: string)
 
   console.log(`Audio buffer size: ${audioFile.length} bytes, MIME: ${mimeType}`);
 
+  // 音声データの最小サイズチェック
+  if (audioFile.length < 1000) {
+    throw new Error('音声ファイルが小さすぎます。最低で1KB以上の音声が必要です。');
+  }
+
+  // M4Aファイルの特別処理
+  if (mimeType === 'audio/mp4') {
+    console.log('🔊 Processing M4A file - using enhanced processing mode');
+  }
+
   // より大きなtimeoutとretryロジックを設定
   const maxRetries = 3;
   let retryCount = 0;
@@ -87,11 +119,21 @@ async function processWithModel(model: any, audioFile: Buffer, mimeType: string)
       console.log(`Processing attempt ${retryCount + 1}/${maxRetries}`);
 
 
+      // Base64エンコーディング前のチェック
+      console.log(`Encoding ${audioFile.length} bytes to base64 with MIME type: ${mimeType}`);
+      const base64Data = audioFile.toString('base64');
+
+      if (!base64Data || base64Data.length === 0) {
+        throw new Error('音声データのbase64エンコーディングに失敗しました');
+      }
+
+      console.log(`Base64 encoded successfully: ${base64Data.length} characters`);
+
       const result = await model.generateContent([
         prompt,
         {
           inlineData: {
-            data: audioFile.toString('base64'),
+            data: base64Data,
             mimeType: mimeType,
           },
         },
@@ -123,7 +165,7 @@ async function processWithModel(model: any, audioFile: Buffer, mimeType: string)
   throw new Error('最大リトライ回数に達しました');
 }
 
-// ファイルのMIMEタイプを判定
+// ファイルのMIMEタイプを判定（Gemini API対応版）
 export function getMimeType(filename: string): string {
   const extension = filename.toLowerCase().split('.').pop();
 
@@ -131,6 +173,8 @@ export function getMimeType(filename: string): string {
     case 'mp3':
       return 'audio/mpeg';
     case 'm4a':
+      // M4Aは一部のAIモデルで問題があるため、MP3として扱うこともある
+      console.warn('⚠️ M4A files may have compatibility issues with some AI models');
       return 'audio/mp4';
     case 'wav':
       return 'audio/wav';
@@ -141,7 +185,7 @@ export function getMimeType(filename: string): string {
     case 'webm':
       return 'audio/webm';
     default:
-      return 'audio/mpeg'; // デフォルトはMP3として扱う
+      return 'audio/mpeg';
   }
 }
 
