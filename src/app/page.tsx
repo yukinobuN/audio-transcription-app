@@ -105,7 +105,7 @@ export default function HomePage() {
         await handleRegularUpload(controller);
       }
     } catch (error) {
-      if (error.name === 'AbortError') {
+      if (error instanceof Error && error.name === 'AbortError') {
         setUploadProgress('処理がキャンセルされました');
       } else {
         console.error('Upload error:', error);
